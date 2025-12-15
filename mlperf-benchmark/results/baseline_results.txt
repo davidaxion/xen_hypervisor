@@ -1,0 +1,75 @@
+=== GPU Baseline Benchmark Results ===
+Date: 2025-12-15
+GPU: Tesla T4 (14.56 GB)
+Location: GCP us-central1-a
+Driver: NVIDIA 590.44.01
+CUDA: 13.1
+
+=== Memory Bandwidth Benchmark ===
+Test Size: 100 MB
+Host to Device: 4.31 GB/s
+Device to Host: 4.53 GB/s
+
+Analysis:
+- PCIe bandwidth is good (4-5 GB/s is expected for PCIe 3.0 x4)
+- Bidirectional bandwidth is symmetric
+- No significant bottlenecks
+
+=== Throughput Benchmark (Alloc/Free) ===
+Allocation Size: 1 MB
+Iterations: 1,000
+Total Time: 0.143 seconds
+Throughput: 6,977 ops/sec
+Average Latency: 0.14 ms (140 microseconds)
+
+Analysis:
+- Very high throughput for memory operations
+- Sub-millisecond latency for 1MB allocations
+- Excellent baseline for comparison
+
+=== Latency Percentiles ===
+Allocation Size: 1 MB
+Samples: 500
+
+p50 (median): 0.135 ms
+p90: 0.153 ms
+p99: 0.198 ms
+
+Analysis:
+- Consistent performance (low variance)
+- p99 latency is only 47% higher than median
+- Good tail latency characteristics
+
+=== Summary ===
+
+✅ GPU Performance: Excellent
+✅ Memory Bandwidth: 4.5 GB/s (as expected)
+✅ Throughput: 6,977 ops/sec
+✅ Latency: Sub-millisecond (140µs average)
+
+These are BASELINE results with direct GPU access (no hypervisor).
+
+Next Steps:
+1. Run same benchmark with libvgpu (our CUDA interceptor)
+2. Compare overhead
+3. Target: <5% performance degradation
+4. Later: Add Xen hypervisor and re-test
+
+=== Comparison Targets ===
+
+When we add our GPU isolation layer:
+
+Acceptable (< 5% overhead):
+- Throughput: > 6,628 ops/sec
+- Average Latency: < 0.147 ms
+- p99 Latency: < 0.208 ms
+
+Good (< 2% overhead):
+- Throughput: > 6,837 ops/sec
+- Average Latency: < 0.143 ms
+- p99 Latency: < 0.202 ms
+
+Excellent (< 1% overhead):
+- Throughput: > 6,907 ops/sec
+- Average Latency: < 0.141 ms
+- p99 Latency: < 0.200 ms
