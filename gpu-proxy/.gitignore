@@ -1,0 +1,103 @@
+# Build artifacts
+*.o
+*.so
+*.so.*
+*.a
+*.dylib
+*.dSYM/
+
+# Executables
+gpu_proxy
+gpu_proxy_stub
+test_client
+test_client_stub
+test_app
+bench
+test
+
+# IDM protocol test binaries
+idm-protocol/idm_test
+
+# Temporary files
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Build directories
+build/
+dist/
+*.egg-info/
+
+# IDE files
+.vscode/
+.idea/
+*.iml
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+venv/
+env/
+
+# Go
+go.mod
+go.sum
+
+# Logs
+*.log
+
+# Core dumps
+core
+core.*
+
+# Shared memory segments (local testing)
+/dev/shm/idm_*
+
+# Credentials
+*.pem
+*.key
+*.crt
+credentials.json
+.env
+
+# Packer
+packer_cache/
+*.box
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+
+# Kubernetes
+kubeconfig
+*.kubeconfig
+
+# Testing artifacts
+test-results/
+coverage/
+
+# Documentation build
+docs/_build/
+docs/.doctrees/
+
+# macOS
+.AppleDouble
+.LSOverride
+Icon
+._*
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+
+# Backup files
+*.bak
+*.backup
+*.orig
