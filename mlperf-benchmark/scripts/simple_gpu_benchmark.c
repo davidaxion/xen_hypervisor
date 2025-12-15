@@ -9,6 +9,9 @@
 #include <time.h>
 #include <string.h>
 
+// Fix for CUDA 13.x API compatibility
+#define cuCtxCreate cuCtxCreate_v2
+
 #define CHECK_CUDA(call) do { \
     CUresult res = call; \
     if (res != CUDA_SUCCESS) { \
