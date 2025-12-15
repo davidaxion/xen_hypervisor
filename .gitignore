@@ -1,0 +1,45 @@
+# Build artifacts
+*.o
+*.so
+*.so.*
+*.a
+*.out
+gpu_proxy
+test_client
+test_app
+bench
+*.dSYM/
+
+# IDM shared memory files
+/dev/shm/idm_*
+/idm_*
+
+# Xen runtime
+*.xl
+*.cfg
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Credentials
+*.pem
+*.key
+credentials.json
+service-account.json
+
+# Logs
+*.log
+logs/
+
+# Temporary
+tmp/
+temp/
+*.tmp
