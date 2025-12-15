@@ -1,238 +1,113 @@
-# GPU Benchmark on Kubernetes
+# MLPerf Inference Benchmark
+
+Official MLPerf Inference benchmarks for GPU performance testing.
 
 ## Overview
 
-This project benchmarks GPU performance on Kubernetes using ResNet-50 inference. It measures:
+This uses the **official MLPerf Inference benchmark** from MLCommons:
+- Industry standard used by NVIDIA, Intel, Google, AMD
+- Reproducible methodology
+- Comparable results with published submissions
+- Real ML workloads (ResNet50, BERT, etc.)
 
-1. **Throughput** (Offline Scenario) - Maximum samples/second with batching
-2. **Latency** (Server Scenario) - Per-request latency (p90, p99)
-3. **Single-Stream** (Edge Scenario) - One sample at a time
+## Setup
+
+Run the automated setup script:
+
+```bash
+./setup-official-mlperf.sh
+```
+
+This installs:
+- MLCFlow (MLCommons automation framework)
+- Official MLPerf Inference repository
+- Python environment with all dependencies
+
+**Installation location**: `/mnt/data/mlperf-official/` on GCP instance
 
 ## Quick Start
 
-### One-Command Deploy
+### 1. SSH to GCP Instance
+
 ```bash
-cd mlperf-benchmark
-./deploy.sh
-```
-
-This will:
-1. Create GKE cluster with T4 GPU
-2. Install NVIDIA drivers
-3. Build and push Docker image
-4. Run benchmark
-5. Save results to `results/baseline/`
-
-**Time**: ~15-20 minutes total
-**Cost**: ~$0.50/hour for cluster
-
-## Manual Deployment
-
-### Step 1: Set Up GKE Cluster
-```bash
-gcloud container clusters create gpu-benchmark-cluster \
+gcloud compute ssh gpu-benchmarking \
     --zone=us-central1-a \
-    --project=robotic-tide-459208-h4 \
-    --machine-type=n1-standard-4 \
-    --accelerator=type=nvidia-tesla-t4,count=1 \
-    --num-nodes=1 \
-    --enable-autoscaling \
-    --min-nodes=0 \
-    --max-nodes=2
+    --project=robotic-tide-459208-h4
 ```
 
-### Step 2: Install NVIDIA Device Plugin
+### 2. Run ResNet50 Benchmark
+
 ```bash
-# Install NVIDIA drivers
-kubectl apply -f https://raw.githubusercontent.com/GoogleCloudPlatform/container-engine-accelerators/master/nvidia-driver-installer/cos/daemonset-preloaded.yaml
+cd /mnt/data/mlperf-official
+source mlc/bin/activate
 
-# Install device plugin
-kubectl apply -f https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/v0.14.0/nvidia-device-plugin.yml
-
-# Verify GPU nodes
-kubectl get nodes "-o=custom-columns=NAME:.metadata.name,GPU:.status.allocatable.nvidia\.com/gpu"
+# Run ResNet50 on GPU (Offline scenario)
+mlcr run-mlperf,inference,_find-performance,_full,_r5.1-dev \
+  --model=resnet50 \
+  --implementation=reference \
+  --framework=onnxruntime \
+  --category=edge \
+  --scenario=Offline \
+  --execution_mode=test \
+  --device=cuda \
+  --quiet
 ```
 
-### Step 3: Build Docker Image
+## Available Benchmarks
+
+- **ResNet50** - Image classification (recommended for GPU testing)
+- **BERT** - Natural language processing
+- **RetinaNet** - Object detection
+- **RNNT** - Speech recognition
+- **3D-UNet** - Medical imaging
+- **GPT-J** - Large language model
+- **Stable Diffusion XL** - Image generation
+
+## Scenarios
+
+- **Offline** - Batch processing (tests throughput)
+- **SingleStream** - Single request (tests latency)
+- **MultiStream** - Multiple streams (tests concurrent processing)
+- **Server** - Real-time server scenario
+
+## Results
+
+Results are saved in: `/mnt/data/mlperf-official/results/`
+
+### Copy Results to Local
+
 ```bash
-cd mlperf-benchmark
-
-docker build -t gcr.io/robotic-tide-459208-h4/gpu-benchmark:latest -f docker/Dockerfile .
-
-docker push gcr.io/robotic-tide-459208-h4/gpu-benchmark:latest
-```
-
-### Step 4: Deploy Benchmark
-```bash
-kubectl apply -f kubernetes/benchmark-job.yaml
-
-# Watch progress
-kubectl get jobs -w
-
-# View logs
-POD=$(kubectl get pods --selector=job-name=gpu-benchmark-baseline -o jsonpath='{.items[0].metadata.name}')
-kubectl logs -f $POD
-```
-
-### Step 5: Collect Results
-```bash
-# Copy results from pod
-kubectl cp ${POD}:/results/benchmark_results.json results/baseline/benchmark_results.json
-
-# View summary
-cat results/baseline/benchmark_results.json | python3 -m json.tool
-```
-
-## Benchmark Scenarios
-
-### 1. Offline (Throughput)
-**Goal**: Maximum samples/second with unlimited batching
-
-**Batch sizes tested**: 1, 8, 32
-
-**Expected results** (T4 GPU):
-- Batch 1: ~200 samples/sec
-- Batch 8: ~1,200 samples/sec
-- Batch 32: ~3,500 samples/sec
-
-### 2. Server (Latency)
-**Goal**: Per-request latency percentiles
-
-**Metrics**: p90, p95, p99 latency in milliseconds
-
-**Expected results** (T4 GPU):
-- Batch 1: p99 < 10ms
-- Batch 8: p99 < 15ms
-- Batch 32: p99 < 30ms
-
-### 3. Single-Stream (Edge)
-**Goal**: Minimal latency, one sample at a time
-
-**Batch size**: 1
-
-**Expected results** (T4 GPU):
-- p90 latency: ~5ms
-
-## Results Format
-
-Results are saved as JSON:
-```json
-{
-  "timestamp": "2025-12-15T12:30:00",
-  "gpu_info": {
-    "name": "Tesla T4",
-    "cuda_version": "12.0",
-    "total_memory_gb": 15.0
-  },
-  "benchmarks": [
-    {
-      "scenario": "offline",
-      "batch_size": 32,
-      "throughput_samples_per_sec": 3500,
-      "duration_sec": 30.0
-    },
-    {
-      "scenario": "server",
-      "batch_size": 32,
-      "latency_p99_ms": 28.5,
-      "latency_p90_ms": 25.2
-    },
-    {
-      "scenario": "single_stream",
-      "batch_size": 1,
-      "latency_p90_ms": 4.8
-    }
-  ]
-}
-```
-
-## Project Structure
-
-```
-mlperf-benchmark/
-├── README.md              # This file
-├── deploy.sh              # Automated deployment
-├── docker/
-│   └── Dockerfile         # Container definition
-├── kubernetes/
-│   └── benchmark-job.yaml # Kubernetes Job manifest
-├── scripts/
-│   └── gpu_benchmark.py   # Benchmark script
-└── results/
-    └── baseline/          # Results saved here
-        └── benchmark_results.json
-```
-
-## Costs
-
-### GKE Cluster
-- **n1-standard-4**: $0.19/hour
-- **T4 GPU**: $0.35/hour
-- **Total**: ~$0.54/hour
-
-### Optimization
-```bash
-# Scale to 0 when not in use
-gcloud container clusters resize gpu-benchmark-cluster \
-    --num-nodes=0 \
-    --zone=us-central1-a
-
-# Delete when done
-gcloud container clusters delete gpu-benchmark-cluster \
+gcloud compute scp --recurse \
+    gpu-benchmarking:/mnt/data/mlperf-official/results/ \
+    mlperf-benchmark/results/ \
     --zone=us-central1-a
 ```
 
-## Troubleshooting
+## Documentation
 
-### GPU not detected
-```bash
-# Check NVIDIA device plugin
-kubectl get pods -n kube-system | grep nvidia
+- **Full Guide**: See `RUN_OFFICIAL_MLPERF.md` in project root
+- **Official Docs**: https://docs.mlcommons.org/inference/
+- **GitHub**: https://github.com/mlcommons/inference
+- **ResNet50 Docs**: https://docs.mlcommons.org/inference/benchmarks/image_classification/resnet50/
 
-# Check node GPU allocation
-kubectl describe nodes | grep nvidia
+## Workflow
+
 ```
+1. Bare Metal Baseline
+   ↓ Run MLPerf ResNet50 on bare metal
 
-### Pod stuck in Pending
-```bash
-# Check events
-kubectl describe pod <pod-name>
+2. With GPU Isolation
+   ↓ Run through GPU proxy layer
 
-# Common issues:
-# - No GPU nodes available
-# - NVIDIA drivers not installed
-# - Resource limits too high
+3. With Xen Hypervisor
+   ↓ Run in full virtualized environment
+
+4. Compare Results
+   ↓ Measure overhead at each stage
 ```
-
-### Container fails to build
-```bash
-# Enable Docker BuildKit
-export DOCKER_BUILDKIT=1
-
-# Rebuild with no cache
-docker build --no-cache -t gcr.io/robotic-tide-459208-h4/gpu-benchmark:latest .
-```
-
-## Next Steps
-
-After getting baseline results, we'll:
-
-1. **Add Xen Hypervisor Layer**
-   - Deploy libvgpu interceptor
-   - Run same benchmark
-   - Compare results
-
-2. **Measure Overhead**
-   - Target: <5% performance degradation
-   - Key metrics: throughput, p99 latency
-
-3. **Multi-Tenant Testing**
-   - Run multiple pods
-   - Verify isolation
-   - Measure interference
 
 ## References
 
-- [MLPerf Inference](https://mlcommons.org/benchmarks/inference/)
-- [GKE GPUs](https://cloud.google.com/kubernetes-engine/docs/how-to/gpus)
-- [NVIDIA k8s-device-plugin](https://github.com/NVIDIA/k8s-device-plugin)
+- MLCommons: https://mlcommons.org
+- MLPerf Inference: https://mlcommons.org/benchmarks/inference-datacenter/
+- Submissions Database: https://mlcommons.org/benchmarks/inference-datacenter/
