@@ -1,0 +1,43 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: gpu-benchmark-baseline
+  labels:
+    app: gpu-benchmark
+    scenario: baseline
+spec:
+  backoffLimit: 2
+  template:
+    metadata:
+      labels:
+        app: gpu-benchmark
+        scenario: baseline
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: benchmark
+        image: gcr.io/robotic-tide-459208-h4/gpu-benchmark:latest
+        imagePullPolicy: Always
+        resources:
+          limits:
+            nvidia.com/gpu: 1
+          requests:
+            nvidia.com/gpu: 1
+            memory: "8Gi"
+            cpu: "4"
+        volumeMounts:
+        - name: results
+          mountPath: /results
+        env:
+        - name: NVIDIA_VISIBLE_DEVICES
+          value: "all"
+        - name: NVIDIA_DRIVER_CAPABILITIES
+          value: "compute,utility"
+        - name: RESULTS_FILE
+          value: "/results/benchmark_results.json"
+      volumes:
+      - name: results
+        emptyDir: {}
+      # Node selector for GPU nodes
+      nodeSelector:
+        cloud.google.com/gke-accelerator: nvidia-tesla-t4
