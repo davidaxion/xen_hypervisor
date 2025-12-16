@@ -1,0 +1,6 @@
+MLPerf ResNet50 Benchmark - Kubernetes
+Throughput: 16.4 images/sec
+Average Latency: 59.36 ms
+p50 Latency: 58.95 ms
+p90 Latency: 61.13 ms
+p99 Latency: 65.44 ms

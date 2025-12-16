@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mlperf-benchmark
+  labels:
+    app: mlperf
+spec:
+  restartPolicy: Never
+  containers:
+  - name: mlperf
+    image: nvidia/cuda:13.1.0-devel-ubuntu22.04
+    command: ["/bin/bash", "/tmp/benchmark.sh"]
+    resources:
+      limits:
+        nvidia.com/gpu: 1
+        memory: "4Gi"
+      requests:
+        nvidia.com/gpu: 1
+        memory: "2Gi"
+    volumeMounts:
+    - name: data-disk
+      mountPath: /mnt/data
+    - name: results
+      mountPath: /results
+    - name: scripts
+      mountPath: /tmp
+  volumes:
+  - name: data-disk
+    hostPath:
+      path: /mnt/data
+      type: DirectoryOrCreate
+  - name: results
+    hostPath:
+      path: /mnt/data/mlperf-results
+      type: DirectoryOrCreate
+  - name: scripts
+    hostPath:
+      path: /mnt/data/k8s-scripts
+      type: DirectoryOrCreate

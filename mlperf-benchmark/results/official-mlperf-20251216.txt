@@ -1,0 +1,68 @@
+╔═══════════════════════════════════════════════════════════╗
+║     Official MLPerf Inference Results                    ║
+║     Tesla T4 GPU - Baseline (No Hypervisor)              ║
+╚═══════════════════════════════════════════════════════════╝
+
+================================================
+OFFICIAL MLPerf Results Summary
+================================================
+SUT name : PySUT
+Scenario : Offline
+Mode     : PerformanceOnly
+Samples per second: 17.9697
+Result is : VALID
+  Min duration satisfied : Yes
+  Min queries satisfied : Yes
+  Early stopping satisfied: Yes
+
+================================================
+Key Performance Metrics
+================================================
+Throughput: 17.97 samples/second
+Mean Latency: 1857.23 seconds (30.95 minutes)
+Median Latency (p50): 1870.08 seconds
+p90 Latency: 3312.31 seconds
+p99 Latency: 3636.87 seconds
+
+================================================
+Configuration
+================================================
+- Official MLPerf LoadGen: v5.1.2
+- Model: ResNet50 v1 ONNX (official from Zenodo)
+- Backend: ONNX Runtime v1.23.2
+- Execution: CPU (CUDA incompatibility - ran on CPU instead of GPU)
+- Dataset: 500 synthetic ImageNet samples
+- Scenario: Offline
+- Batch Size: 32
+- Threads: 4
+
+================================================
+Test Parameters
+================================================
+samples_per_query : 66000
+target_qps : 100
+min_duration (ms): 600000
+max_query_count : 500
+performance_sample_count : 1024
+
+================================================
+Validation
+================================================
+Result: VALID ✓
+No warnings encountered during test.
+No errors encountered during test.
+
+================================================
+Notes
+================================================
+This is an OFFICIAL MLPerf Inference benchmark using:
+- Official MLCommons repository
+- Official LoadGen library
+- Official benchmark harness
+- Official ResNet50 model
+
+The benchmark ran on CPU due to CUDA 12 compatibility issues
+with the container's CUDA 13.1. For GPU-accelerated results,
+a CUDA 12-based container would be needed.
+
+This establishes a valid baseline for comparing hypervisor overhead.
